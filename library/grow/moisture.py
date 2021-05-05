@@ -10,7 +10,7 @@ MOISTURE_INT_PIN = 4
 class Moisture(object):
     """Grow moisture sensor driver."""
 
-    def __init__(self, channel=1, wet_point=None, dry_point=None):
+    def __init__(self, channel=1, continuous=True):
         """Create a new moisture sensor.
 
         Uses an interrupt to count pulses on the GPIO pin corresponding to the selected channel.
@@ -34,26 +34,27 @@ class Moisture(object):
         self._history_length = 200
         self._last_pulse = time.time()
         self._new_data = False
-        self._wet_point = wet_point if wet_point is not None else 0.7
-        self._dry_point = dry_point if dry_point is not None else 27.6
+        self._wet_point = 0.7
+        self._dry_point = 27.6
         self._time_last_reading = time.time()
-        try:
-            GPIO.add_event_detect(self._gpio_pin, GPIO.RISING, callback=self._event_handler, bouncetime=1)
-        except RuntimeError as e:
-            if self._gpio_pin == 8:
-                raise RuntimeError("""Unable to set up edge detection on BCM8.
+        if continuous:
+            try:
+                GPIO.add_event_detect(self._gpio_pin, GPIO.RISING, callback=self._event_handler, bouncetime=1)
+            except RuntimeError as e:
+                if self._gpio_pin == 8:
+                    raise RuntimeError("""Unable to set up edge detection on BCM8.
 
 Please ensure you add the following to /boot/config.txt and reboot:
 
 dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
 
 """)
-            else:
-                raise e
+                else:
+                    raise e
 
         self._time_start = time.time()
 
-    def _event_handler(self, pin):
+    def _event_handler(self):
         self._count += 1
         self._last_pulse = time.time()
         if self._time_elapsed >= 1.0:
@@ -63,6 +64,35 @@ dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
             self._count = 0
             self._time_last_reading = time.time()
             self._new_data = True
+
+    def _one_shot_event_handler(self):
+        self._count += 1
+        self._last_pulse = time.time()
+        if self._time_elapsed >= 1.0:
+            self._reading = self._count / self._time_elapsed
+            self._history.insert(0, self._reading)
+            self._history = self._history[:self._history_length]
+            self._count = 0
+            self._time_last_reading = time.time()
+            self._new_data = True
+
+    def get_reading(self):
+        try:
+            GPIO.add_event_detect(self._gpio_pin, GPIO.RISING, callback=self._one_shot_event_handler, bouncetime=1)
+            time.sleep(3)
+            GPIO.remove_event_detect(self._gpio_pin)
+            return self.moisture
+        except RuntimeError as e:
+            if self._gpio_pin == 8:
+                raise RuntimeError("""Unable to set up edge detection on BCM8.
+
+Please ensure you add the following to /boot/config.txt and reboot:
+
+dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
+
+    """)
+            else:
+                raise e
 
     @property
     def history(self):

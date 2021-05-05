@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-import logging
 import math
-import pathlib
-import random
 import sys
 import threading
 import time
@@ -13,11 +10,9 @@ import ST7735
 from fonts.ttf import RobotoMedium as UserFont
 from PIL import Image, ImageDraw, ImageFont
 
-import yaml
 from grow import Piezo
-from grow.moisture import Moisture
-from grow.pump import Pump
-
+from grow.config import Config
+from grow.channel import Channel
 
 FPS = 10
 
@@ -82,12 +77,12 @@ class View:
         self._image.paste(col, position, mask=icon)
 
     def label(
-        self,
-        position="X",
-        text=None,
-        bgcolor=(0, 0, 0),
-        textcolor=(255, 255, 255),
-        margin=4,
+            self,
+            position="X",
+            text=None,
+            bgcolor=(0, 0, 0),
+            textcolor=(255, 255, 255),
+            margin=4,
     ):
         if position not in ["A", "B", "X", "Y"]:
             raise ValueError(f"Invalid label position {position}")
@@ -145,8 +140,8 @@ class View:
                 line = []
 
                 while (
-                    len(words) > 0
-                    and font.getsize(" ".join(line + [words[0]]))[0] <= width
+                        len(words) > 0
+                        and font.getsize(" ".join(line + [words[0]]))[0] <= width
                 ):
                     line.append(words.pop(0))
 
@@ -576,7 +571,7 @@ class ChannelEditView(ChannelView, EditView):
                 "prop": "pump_time",
                 "inc": 0.05,
                 "min": 0.05,
-                "max": 2.0,
+                "max": 10.0,
                 "mode": "float",
                 "round": 2,
                 "format": lambda value: f"{value:0.2f}sec",
@@ -590,7 +585,7 @@ class ChannelEditView(ChannelView, EditView):
                 "max": 1.0,
                 "mode": "float",
                 "round": 2,
-                "format": lambda value: f"{value*100:0.0f}%",
+                "format": lambda value: f"{value * 100:0.0f}%",
                 "help": "Speed of pump"
             },
             {
@@ -598,12 +593,11 @@ class ChannelEditView(ChannelView, EditView):
                 "prop": "watering_delay",
                 "inc": 10,
                 "min": 30,
-                "max": 500,
+                "max": 1200,
                 "mode": "int",
                 "format": lambda value: f"{value:0.0f}sec",
                 "help": "Delay between waterings"
             },
-
         ]
         EditView.__init__(self, image, options)
         ChannelView.__init__(self, image, channel)
@@ -616,170 +610,6 @@ class ChannelEditView(ChannelView, EditView):
         option = self._options[self._current_option]
         if "context" in option:
             self.draw_context((34, 6), option["context"])
-
-
-class Channel:
-    colors = [
-        COLOR_BLUE,
-        COLOR_GREEN,
-        COLOR_YELLOW,
-        COLOR_RED
-    ]
-
-    def __init__(
-        self,
-        display_channel,
-        sensor_channel,
-        pump_channel,
-        title=None,
-        water_level=0.5,
-        warn_level=0.5,
-        pump_speed=0.5,
-        pump_time=0.2,
-        watering_delay=60,
-        wet_point=0.7,
-        dry_point=26.7,
-        icon=None,
-        auto_water=False,
-        enabled=False,
-    ):
-        self.channel = display_channel
-        self.sensor = Moisture(sensor_channel)
-        self.pump = Pump(pump_channel)
-        self.water_level = water_level
-        self.warn_level = warn_level
-        self.auto_water = auto_water
-        self.pump_speed = pump_speed
-        self.pump_time = pump_time
-        self.watering_delay = watering_delay
-        self._wet_point = wet_point
-        self._dry_point = dry_point
-        self.last_dose = time.time()
-        self.icon = icon
-        self._enabled = enabled
-        self.alarm = False
-        self.title = f"Channel {display_channel}" if title is None else title
-
-        self.sensor.set_wet_point(wet_point)
-        self.sensor.set_dry_point(dry_point)
-
-    @property
-    def enabled(self):
-        return self._enabled
-
-    @enabled.setter
-    def enabled(self, enabled):
-        self._enabled = enabled
-
-    @property
-    def wet_point(self):
-        return self._wet_point
-
-    @property
-    def dry_point(self):
-        return self._dry_point
-
-    @wet_point.setter
-    def wet_point(self, wet_point):
-        self._wet_point = wet_point
-        self.sensor.set_wet_point(wet_point)
-
-    @dry_point.setter
-    def dry_point(self, dry_point):
-        self._dry_point = dry_point
-        self.sensor.set_dry_point(dry_point)
-
-    def warn_color(self):
-        value = self.sensor.moisture
-
-    def indicator_color(self, value):
-        value = 1.0 - value
-
-        if value == 1.0:
-            return self.colors[-1]
-        if value == 0.0:
-            return self.colors[0]
-
-        value *= len(self.colors) - 1
-        a = int(math.floor(value))
-        b = a + 1
-        blend = float(value - a)
-
-        r, g, b = [int(((self.colors[b][i] - self.colors[a][i]) * blend) + self.colors[a][i]) for i in range(3)]
-
-        return (r, g, b)
-
-    def update_from_yml(self, config):
-        if config is not None:
-            self.pump_speed = config.get("pump_speed", self.pump_speed)
-            self.pump_time = config.get("pump_time", self.pump_time)
-            self.warn_level = config.get("warn_level", self.warn_level)
-            self.water_level = config.get("water_level", self.water_level)
-            self.watering_delay = config.get("watering_delay", self.watering_delay)
-            self.auto_water = config.get("auto_water", self.auto_water)
-            self.enabled = config.get("enabled", self.enabled)
-            self.wet_point = config.get("wet_point", self.wet_point)
-            self.dry_point = config.get("dry_point", self.dry_point)
-
-        pass
-
-    def __str__(self):
-        return """Channel: {channel}
-Enabled: {enabled}
-Alarm level: {warn_level}
-Auto water: {auto_water}
-Water level: {water_level}
-Pump speed: {pump_speed}
-Pump time: {pump_time}
-Delay: {watering_delay}
-Wet point: {wet_point}
-Dry point: {dry_point}
-""".format(
-            channel=self.channel,
-            enabled=self.enabled,
-            warn_level=self.warn_level,
-            auto_water=self.auto_water,
-            water_level=self.water_level,
-            pump_speed=self.pump_speed,
-            pump_time=self.pump_time,
-            watering_delay=self.watering_delay,
-            wet_point=self.wet_point,
-            dry_point=self.dry_point,
-        )
-
-    def water(self):
-        if not self.auto_water:
-            return False
-        if time.time() - self.last_dose > self.watering_delay:
-            self.pump.dose(self.pump_speed, self.pump_time, blocking=False)
-            self.last_dose = time.time()
-            return True
-        return False
-
-    def render(self, image, font):
-        pass
-
-    def update(self):
-        if not self.enabled:
-            return
-        sat = self.sensor.saturation
-        if sat < self.water_level:
-            if self.water():
-                logging.info(
-                    "Watering Channel: {} - rate {:.2f} for {:.2f}sec".format(
-                        self.channel, self.pump_speed, self.pump_time
-                    )
-                )
-        if sat < self.warn_level:
-            if not self.alarm:
-                logging.warning(
-                    "Alarm on Channel: {} - saturation is {:.2f}% (warn level {:.2f}%)".format(
-                        self.channel, sat * 100, self.warn_level * 100
-                    )
-                )
-            self.alarm = True
-        else:
-            self.alarm = False
 
 
 class Alarm(View):
@@ -806,10 +636,10 @@ class Alarm(View):
             self._sleep_until = None
 
         if (
-            self.enabled
-            and not lights_out
-            and self._triggered
-            and time.time() - self._time_last_beep > self.interval
+                self.enabled
+                and not lights_out
+                and self._triggered
+                and time.time() - self._time_last_beep > self.interval
         ):
             self.piezo.beep(self.beep_frequency, 0.1, blocking=False)
             threading.Timer(
@@ -831,7 +661,7 @@ class Alarm(View):
     def render(self, position=(0, 0)):
         x, y = position
         # Draw the snooze icon- will be pulsing red if the alarm state is True
-        #self._draw.rectangle((x, y, x + 19, y + 19), (255, 255, 255))
+        # self._draw.rectangle((x, y, x + 19, y + 19), (255, 255, 255))
         r = 129
         if self._triggered and self._sleep_until is None:
             r = int(((math.sin(time.time() * 3 * math.pi) + 1.0) / 2.0) * 128) + 127
@@ -922,80 +752,6 @@ class ViewController:
         return self.view.button_y()
 
 
-class Config:
-    def __init__(self):
-        self.config = None
-        self._last_save = ""
-
-        self.channel_settings = [
-            "enabled",
-            "warn_level",
-            "wet_point",
-            "dry_point",
-            "watering_delay",
-            "auto_water",
-            "pump_time",
-            "pump_speed"
-        ]
-
-        self.general_settings = [
-            "alarm_enable",
-            "alarm_interval",
-        ]
-
-    def load(self, settings_file="settings.yml"):
-        if len(sys.argv) > 1:
-            settings_file = sys.argv[1]
-
-        settings_file = pathlib.Path(settings_file)
-
-        if settings_file.is_file():
-            try:
-                self.config = yaml.safe_load(open(settings_file))
-            except yaml.parser.ParserError as e:
-                raise yaml.parser.ParserError(
-                    "Error parsing settings file: {} ({})".format(settings_file, e)
-                )
-
-    def save(self, settings_file="settings.yml"):
-        if len(sys.argv) > 1:
-            settings_file = sys.argv[1]
-
-        settings_file = pathlib.Path(settings_file)
-
-        dump = yaml.dump(self.config)
-
-        if dump == self._last_save:
-            return
-
-        if settings_file.is_file():
-            with open(settings_file, "w") as file:
-                file.write(dump)
-
-        self._last_save = dump
-
-    def get_channel(self, channel_id):
-        return self.config.get("channel{}".format(channel_id), {})
-
-    def set(self, section, settings):
-        if isinstance(settings, dict):
-            self.config[section].update(settings)
-        else:
-            for key in self.channel_settings:
-                value = getattr(settings, key, None)
-                if value is not None:
-                    self.config[section].update({key: value})
-
-    def set_channel(self, channel_id, settings):
-        self.set("channel{}".format(channel_id), settings)
-
-    def get_general(self):
-        return self.config.get("general", {})
-
-    def set_general(self, settings):
-        self.set("general", settings)
-
-
 def main():
     def handle_button(pin):
         index = BUTTONS.index(pin)
@@ -1017,7 +773,6 @@ def main():
 
         if label == "Y":
             viewcontroller.button_y()
-
 
     # Set up the ST7735 SPI Display
     display = ST7735.ST7735(
@@ -1049,7 +804,8 @@ def main():
     for pin in BUTTONS:
         GPIO.add_event_detect(pin, GPIO.FALLING, handle_button, bouncetime=200)
 
-    config.load()
+    config_file = sys.argv[1]
+    config.load(config_file)
 
     for channel in channels:
         channel.update_from_yml(config.get_channel(channel.channel))
@@ -1131,7 +887,7 @@ Alarm Interval: {:.2f}s
             }
         )
 
-        config.save()
+        config.save(config_file)
 
         time.sleep(1.0 / FPS)
 
