@@ -1,57 +1,64 @@
-# Grow HAT Mini
+# Grow Hat Fleet
 
-Designed as a tiny valet for your plants, Grow HAT mini will monitor the soil moiture for up to 3 plants, water them with tiny pumps, and show you their health on its small but informative screen. Learn more - https://shop.pimoroni.com/products/grow
+This code is for managing any number of Raspberry Pi Zeros running the [Pimoroni Grow Kit](https://shop.pimoroni.com/products/grow) 
+Hat with both moisture sensors and the [optional pump](https://shop.pimoroni.com/products/mini-pump) and
+[piping](https://shop.pimoroni.com/products/8mm-silicone-tube-1m). At it's simplest you can 
+manually set the dry and wet points for each of your sensors through the built-in screen with 
+buttons. Most of the coded for this is lightly adapted from the example 
+[code given by Pimoroni](https://github.com/pimoroni/grow-python).
 
-[![Build Status](https://travis-ci.com/pimoroni/enviroplus-python.svg?branch=master)](https://travis-ci.com/pimoroni/grow-python)
-[![Coverage Status](https://coveralls.io/repos/github/pimoroni/grow-python/badge.svg?branch=master)](https://coveralls.io/github/pimoroni/grow-python?branch=master)
-[![PyPi Package](https://img.shields.io/pypi/v/enviroplus.svg)](https://pypi.python.org/pypi/growhat)
-[![Python Versions](https://img.shields.io/pypi/pyversions/enviroplus.svg)](https://pypi.python.org/pypi/growhat)
+For more than one unit, or simply to have remote control there is an optional admin 
+server module which can provide each device with fresh configuration each time the sensors 
+are checked. This server will also accept events pushed from the devices and certain actions 
+can be triggered.
 
-# Installing
+## Device
 
-You're best using the "One-line" install method.
+### Installation
 
-## One-line (Installs from GitHub)
+Provisioning of devices is managed through a simple Ansible playbook. This text assumes you 
+have a [working Ansible installation](https://docs.ansible.com/ansible/latest/installation_guide/index.html)
+a [valid SSH keypair](https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-2) 
+set-up on your workstation and a freshly written [Raspberry Pi OS Lite image](https://www.raspberrypi.org/documentation/installation/installing-images/).
 
-```
-curl -sSL https://get.pimoroni.com/grow | bash
-```
+Enable SSH for the image and copy Wi-Fi configuration for first boot (default values for 
+env vars shown here):
 
-**Note** report issues with one-line installer here: https://github.com/pimoroni/get
+    $ WPA_CONF=~/Documents/wpa_supplicant.conf BOOT_PART=/Volumes/boot ansible-playbook provision/headless-boot.yaml -i localhost,
 
-## Or... Install and configure dependencies from GitHub:
+Unmount the SD card and insert it into the Pi, then power up the device. Once it has booted,
+secure the installation:
 
-* `git clone https://github.com/pimoroni/grow-python`
-* `cd grow-python`
-* `sudo ./install.sh`
+    $ ssh-copy-id pi@raspberrypi.local
+    $ HOST_NAME=growpi ansible-playbook provision/harden-device.yaml -i raspberrypi.local, -u pi
 
-**Note** Raspbian Lite users may first need to install git: `sudo apt install git`
+The device will reboot. Now provision the Grow Pi software itself:
 
-## Or... Install from PyPi and configure manually:
+    $ ansible-playbook provision/device-provision.yaml -i growpi.local, -u pi`
 
-* Install dependencies:
+The device will reboot.
 
-```
-sudo apt install python3-setuptools python3-pip python3-yaml python3-smbus python3-pil python3-spidev python3-rpi.gpio
-```
+### Configuration via the built-in UI
 
-* Run `sudo pip3 install growhat`
+The controls from the main view are as follows:
 
-**Note** this wont perform any of the required configuration changes on your Pi, you may additionally need to:
+* `A` - cycle through the main screen and detailed view of each channel
+* `B` - snooze the alarm
+* `X` - configure either the global settings, or the settings for the selected channel
 
-* Enable i2c: `sudo raspi-config nonint do_i2c 0`
-* Enable SPI: `sudo raspi-config nonint do_spi 0`
-* Add the following to `/boot/config.txt`: `dtoverlay=spi0-cs,cs0_pin=14`
+The full list of values that can be configured for each channel:
 
-## Monitoring
+* `water_level` - The level at which auto-watering should be triggered (soil saturation from 0.0 to 1.0)
+* `warn_level` - The level at which the alarm should be triggered (soil saturation from 0.0 to 1.0)
+* `pump_speed` - The speed at which the pump should be run (from 0.0 low speed to 1.0 full speed)
+* `pump_time` - The time that the pump should run for (in seconds)
+* `auto_water` - Whether to run the attached pump (True to auto-water, False for manual watering)
+* `wet_point` - Value for the sensor in saturated soil (in Hz)
+* `dry_point` - Value for the sensor in totally dry soil (in Hz)
 
-You should read the following to get up and running with our monitoring script:
+The list of global settings that can be changed:
 
-* [Using and configuring monitor.py](examples/README.md)
-* [Setting up monitor.py as a service](service/README.md)
+* `alarm_enable` - Whether to enable the alarm
+* `alarm_interval` - The interval at which the alarm should beep (in seconds)
+* `watering_delay` - Delay between runs of the worker (in minutes)
 
-## Help & Support
-
-* GPIO Pinout - https://pinout.xyz/pinout/grow_hat_mini
-* Support forums - http://forums.pimoroni.com/c/support
-* Discord - https://discord.gg/hr93ByC

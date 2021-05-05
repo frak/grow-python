@@ -1,0 +1,84 @@
+---
+- name: Provision Grow Pi Device
+  hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    packages:
+      - vim
+      - git
+      - python3-pip
+      - python3-setuptools
+      - python3-yaml
+      - python3-smbus
+      - python3-pil
+      - python3-spidev
+      - python3-rpi.gpio
+      - python3-numpy
+  become: yes
+  become_user: root
+  tasks:
+    - name: Install packages
+      apt:
+        state: latest
+        pkg: "{{ packages }}"
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install python dependencies
+      pip:
+        name:
+          - st7735
+          - pyyaml
+          - ltr559
+          - fonts
+          - font-roboto
+        executable: /usr/bin/pip3
+    - name: Checkout code from Github
+      git:
+        repo: https://github.com/frak/grow-python.git
+        dest: /var/grow-python
+        version: ui-separation
+    - name: Creating runtime directory
+      file:
+        path: /var/lib/grow-monitor
+        state: directory
+    - name: Copy settings if not there already
+      copy:
+        src: "../device/settings.yml"
+        dest: /var/lib/grow-monitor/settings.yml
+        force: no
+    - name: Check if SPI is enabled
+      command: raspi-config nonint get_spi
+      register: has_spi
+      changed_when: has_spi.stdout == "1"
+    - name: Setup SPI
+      command: raspi-config nonint do_spi 0
+      when: has_spi.stdout == "1"
+    - name: Check if I2C is enabled
+      command: raspi-config nonint get_i2c
+      register: has_i2c
+      changed_when: has_i2c.stdout == "1"
+    - name: Setup I2C
+      command: raspi-config nonint do_i2c 0
+      when: has_i2c.stdout == "1"
+    - name: Set dtoverlay in /boot/config.txt
+      lineinfile:
+        path: /boot/config.txt
+        line: dtoverlay=spi0-cs,cs0_pin=14
+    - name: Copy service files
+      copy:
+        src: "../service/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+      with_items:
+        - grow-monitor.service
+        - grow-worker.service
+        - grow-worker.timer
+    - name: Start services
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "{{ item }}"
+      with_items:
+        - grow-monitor.service
+        - grow-worker.timer
+    - name: Reboot the device to apply changes
+      reboot:

@@ -1,0 +1,10 @@
+[Unit]
+Description=Grow Worker
+Wants=grow-worker.timer
+
+[Service]
+WorkingDirectory=/var/grow-python/grow_device
+ExecStart=/var/grow-python/grow_device/worker.py /var/lib/grow-monitor/settings.yml
+
+[Install]
+WantedBy=multi-user.target

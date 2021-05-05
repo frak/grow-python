@@ -1,0 +1,15 @@
+---
+- name: Prepare RPi image for headless booting
+  hosts: localhost
+  vars:
+    wpa_conf_path: "{{ lookup('env', 'WPA_CONF') | default('~/Documents/wpa_supplicant.conf') }}"
+    boot_partition: "{{ lookup('env', 'BOOT_PART') | default('/Volumes/boot') }}"
+  tasks:
+    - name: Create file to enable SSH
+      file:
+        path: "{{ boot_partition }}/ssh"
+        state: touch
+    - name: Copy WiFi configuration to be used on first boot
+      copy:
+        src: "{{ wpa_conf_path }}"
+        dest: "{{ boot_partition }}/wpa_supplicant.conf"

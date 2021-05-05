@@ -1,0 +1,11 @@
+[Unit]
+Description=Runs the Grow Worker service every hour
+Requires=grow-worker.service
+
+[Timer]
+Unit=grow-worker.service
+OnUnitInactiveSec=30m
+AccuracySec=1m
+
+[Install]
+WantedBy=timers.target
