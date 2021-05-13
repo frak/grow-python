@@ -17,9 +17,7 @@ class Channel:
 
     def __init__(
             self,
-            display_channel,
-            sensor_channel,
-            pump_channel,
+            channel_number,
             logger,
             title=None,
             water_level=0.5,
@@ -33,11 +31,11 @@ class Channel:
             auto_water=False,
             enabled=False,
     ):
-        self._run_file = f"/var/run/grow-{display_channel}-{sensor_channel}-{pump_channel}"
+        self._run_file = f"/var/run/grow-monitor-{channel_number}"
 
-        self.channel = display_channel
-        self.sensor = Moisture(sensor_channel, False)
-        self.pump = Pump(pump_channel)
+        self.channel = channel_number
+        self.sensor = Moisture(channel_number)
+        self.pump = Pump(channel_number)
         self.logger = logger
         self.water_level = water_level
         self.warn_level = warn_level
@@ -49,16 +47,15 @@ class Channel:
         self._dry_point = dry_point
         self.icon = icon
         self._enabled = enabled
-        self.alarm = False
-        self.title = f"Channel {display_channel}" if title is None else title
-
+        self._alarm = False
+        self.title = f"Channel {channel_number}" if title is None else title
 
         self.sensor.set_wet_point(wet_point)
         self.sensor.set_dry_point(dry_point)
 
     @classmethod
     def channel_from_config(cls, number, config, logger):
-        out = Channel(number, number, number, logger)
+        out = Channel(number, logger)
         out.update_from_yml(config)
         return out
 
@@ -69,6 +66,14 @@ class Channel:
     @enabled.setter
     def enabled(self, enabled):
         self._enabled = enabled
+
+    @property
+    def alarm(self):
+        return self._alarm
+
+    @alarm.setter
+    def alarm(self, alarm):
+        self._alarm = alarm
 
     @property
     def wet_point(self):
@@ -85,7 +90,7 @@ class Channel:
         return getmtime(self._run_file)
 
     def set_last_dose(self):
-        Path(self._run_file).touch()
+        Path(self._run_file).touch(exist_ok=True)
 
     @wet_point.setter
     def wet_point(self, wet_point):
@@ -125,12 +130,14 @@ class Channel:
             self.enabled = config.get("enabled", self.enabled)
             self.wet_point = config.get("wet_point", self.wet_point)
             self.dry_point = config.get("dry_point", self.dry_point)
+            self.alarm = config.get("alarm", self.alarm)
 
         pass
 
     def __str__(self):
         return """Channel: {channel}
 Enabled: {enabled}
+Alarm: {alarm}
 Alarm level: {warn_level}
 Auto water: {auto_water}
 Water level: {water_level}
@@ -150,45 +157,48 @@ Dry point: {dry_point}
             watering_delay=self.watering_delay,
             wet_point=self.wet_point,
             dry_point=self.dry_point,
+            alarm=self.alarm,
         )
 
     def water(self):
-        if not self.auto_water:
+        if time.time() - self.last_dose < self.watering_delay:
             return False
-        if time.time() - self.last_dose > self.watering_delay:
-            self.pump.dose(self.pump_speed, self.pump_time, blocking=False)
-            self.set_last_dose()
-            return True
-        return False
+
+        self.pump.dose(self.pump_speed, self.pump_time, blocking=False)
+        self.set_last_dose()
+        return True
 
     def render(self, image, font):
         pass
 
     def update(self):
         if not self.enabled:
-            self.logger.info(
-                f"Channel {self.channel} is disabled"
-            )
+            self.logger.info(f"Channel {self.channel} is disabled")
             return
-        # sat = self.sensor.saturation
+
         sat = self.sensor.get_reading()
         if sat < self.water_level:
-            if self.water():
+            if not self.auto_water:
                 self.logger.info(
-                    "Watering Channel: {} - rate {:.2f} for {:.2f}sec".format(
-                        self.channel, self.pump_speed, self.pump_time
-                    )
+                    f"Channel {self.channel} is not auto water and thirsty, sat: {sat} level: {self.water_level}"
                 )
+            elif self.water():
+                self.logger.info(
+                    "Channel {} watering at {:.2f} for {:.2f}secs".format(self.channel, self.pump_speed,
+                                                                          self.pump_time)
+                )
+            else:
+                self.logger.info(f"Channel {self.channel} waiting for next dose, sat: {sat} level: {self.water_level}")
         else:
             self.logger.info(
-                f"Channel {self.channel} does not need watering, saturation {sat} water level {self.water_level}"
+                f"Channel {self.channel} does not need watering, sat: {sat} level: {self.water_level}"
             )
+
         if sat < self.warn_level:
             if not self.alarm:
                 self.logger.warning(
-                    "Alarm on Channel: {} - saturation is {:.2f}% (warn level {:.2f}%)".format(
-                        self.channel, sat * 100, self.warn_level * 100
-                    )
+                    "Channel {} ALARM - saturation is {:.2f}% (warn level {:.2f}%)".format(self.channel, sat * 100,
+                                                                                           self.warn_level * 100)
                 )
             self.alarm = True
         else:

@@ -11,7 +11,7 @@ MOISTURE_INT_PIN = 4
 class Moisture(object):
     """Grow moisture sensor driver."""
 
-    def __init__(self, channel=1, continuous=True):
+    def __init__(self, channel=1):
         """Create a new moisture sensor.
 
         Uses an interrupt to count pulses on the GPIO pin corresponding to the selected channel.
@@ -19,7 +19,6 @@ class Moisture(object):
         The moisture reading is given as pulses per second.
 
         :param channel: One of 1, 2 or 3. 4 can optionally be used to set up a sensor on the Int pin (BCM4)
-        :param continuous: Whether to run continuously or just read the sensor on demand
 
         """
         self._gpio_pin = [MOISTURE_1_PIN, MOISTURE_2_PIN, MOISTURE_3_PIN, MOISTURE_INT_PIN][channel - 1]
@@ -32,50 +31,33 @@ class Moisture(object):
         self._count = 0
         self._reading = 0
         self._last_pulse = time.time()
-        self._new_data = False
         self._wet_point = 0.7
         self._dry_point = 27.6
         self._time_last_reading = time.time()
-        self._first_read = True
-        if continuous:
-            try:
-                GPIO.add_event_detect(self._gpio_pin, GPIO.RISING, callback=self._event_handler, bouncetime=1)
-            except RuntimeError as e:
-                if self._gpio_pin == 8:
-                    raise RuntimeError("""Unable to set up edge detection on BCM8.
-
-Please ensure you add the following to /boot/config.txt and reboot:
-
-dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
-
-""")
-                else:
-                    raise e
+        self._readings = []
 
         self._time_start = time.time()
+
+    def get_reading(self):
+        self._readings = []
+        self._get_readings()
+        self._reading = self._average_readings()
+        self._history.add_reading(self._reading)
+        return max(0.0, min(1.0, self.saturation))
 
     def _event_handler(self, pin):
         self._count += 1
         self._last_pulse = time.time()
         if self._time_elapsed >= 1.0:
-            if self._first_read:
-                self._first_read = False
-            else:
-                self._reading = self._count / self._time_elapsed
-                self._history.add_reading(self._reading)
-                self._count = 0
-                self._time_last_reading = time.time()
-                self._new_data = True
+            self._readings.append(self._count / self._time_elapsed)
+            self._count = 0
+            self._time_last_reading = time.time()
 
-    def get_reading(self):
+    def _get_readings(self):
         try:
-            self._first_read = True
             GPIO.add_event_detect(self._gpio_pin, GPIO.RISING, callback=self._event_handler, bouncetime=1)
-            time.sleep(2.1)
+            time.sleep(3.1)
             GPIO.remove_event_detect(self._gpio_pin)
-            saturation = float(self.moisture - self._dry_point) / self.range
-            saturation = round(saturation, 3)
-            return max(0.0, min(1.0, saturation))
         except RuntimeError as e:
             if self._gpio_pin == 8:
                 raise RuntimeError("""Unable to set up edge detection on BCM8.
@@ -87,6 +69,9 @@ dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
 """)
             else:
                 raise e
+
+    def _average_readings(self):
+        return sum(self._readings) / len(self._readings)
 
     @property
     def history(self):
@@ -140,22 +125,7 @@ dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
         Fully dry (in air) is approximately 900 pulses/sec.
 
         """
-        self._new_data = False
         return self._reading
-
-    @property
-    def active(self):
-        """Check if the moisture sensor is producing a valid reading."""
-        return (time.time() - self._last_pulse) < 1.0 and self._reading > 0 and self._reading < 28
-
-    @property
-    def new_data(self):
-        """Check for new reading.
-
-        Returns True if moisture value has been updated since last reading moisture or saturation.
-
-        """
-        return self._new_data
 
     @property
     def range(self):

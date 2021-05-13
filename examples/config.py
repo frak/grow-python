@@ -9,6 +9,7 @@ class Config:
 
         self.channel_settings = [
             "enabled",
+            "alarm",
             "warn_level",
             "wet_point",
             "dry_point",
@@ -61,8 +62,8 @@ class Config:
                 if value is not None:
                     self.config[section].update({key: value})
 
-    def set_channel(self, channel_id, settings):
-        self.set("channel{}".format(channel_id), settings)
+    def set_channel(self, channel):
+        self.set("channel{}".format(channel.channel), channel)
 
     def get_general(self):
         return self.config.get("general", {})
