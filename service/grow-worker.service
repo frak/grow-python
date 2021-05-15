@@ -1,0 +1,10 @@
+[Unit]
+Description=Grow Worker
+Wants=grow-worker.timer
+
+[Service]
+WorkingDirectory=/usr/share/grow-monitor
+ExecStart=/home/pi/frak/worker.py /etc/default/grow
+
+[Install]
+WantedBy=multi-user.target
