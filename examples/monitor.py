@@ -31,16 +31,16 @@ COLOR_BLACK = (0, 0, 0)
 
 
 # Only the ALPHA channel is used from these images
-icon_drop = Image.open("icons/icon-drop.png").convert("RGBA")
-icon_nodrop = Image.open("icons/icon-nodrop.png").convert("RGBA")
-icon_rightarrow = Image.open("icons/icon-rightarrow.png").convert("RGBA")
-icon_alarm = Image.open("icons/icon-alarm.png").convert("RGBA")
-icon_snooze = Image.open("icons/icon-snooze.png").convert("RGBA")
-icon_help = Image.open("icons/icon-help.png").convert("RGBA")
-icon_settings = Image.open("icons/icon-settings.png").convert("RGBA")
-icon_channel = Image.open("icons/icon-channel.png").convert("RGBA")
-icon_backdrop = Image.open("icons/icon-backdrop.png").convert("RGBA")
-icon_return = Image.open("icons/icon-return.png").convert("RGBA")
+icon_drop = Image.open("../icons/icon-drop.png").convert("RGBA")
+icon_nodrop = Image.open("../icons/icon-nodrop.png").convert("RGBA")
+icon_rightarrow = Image.open("../icons/icon-rightarrow.png").convert("RGBA")
+icon_alarm = Image.open("../icons/icon-alarm.png").convert("RGBA")
+icon_snooze = Image.open("../icons/icon-snooze.png").convert("RGBA")
+icon_help = Image.open("../icons/icon-help.png").convert("RGBA")
+icon_settings = Image.open("../icons/icon-settings.png").convert("RGBA")
+icon_channel = Image.open("../icons/icon-channel.png").convert("RGBA")
+icon_backdrop = Image.open("../icons/icon-backdrop.png").convert("RGBA")
+icon_return = Image.open("../icons/icon-return.png").convert("RGBA")
 
 
 class View:
