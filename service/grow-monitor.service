@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Type=simple
 WorkingDirectory=/var/grow-python
-ExecStart=/var/grow-python/ui.py /var/grow-python/settings.yml
+ExecStart=/var/grow-python/ui.py /var/lib/grow-monitor/settings.yml
 Restart=on-failure
 StandardOutput=syslog+console
 StandardError=syslog+console
