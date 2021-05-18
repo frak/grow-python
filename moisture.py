@@ -71,6 +71,8 @@ dtoverlay=spi0-cs,cs0_pin=14 # Re-assign CS0 from BCM 8 so that Grow can use it
                 raise e
 
     def _average_readings(self):
+        if len(self._readings) == 0:
+            return 0
         return sum(self._readings) / len(self._readings)
 
     @property
