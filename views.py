@@ -3,7 +3,7 @@ import time
 import threading
 
 from fonts.ttf import RobotoMedium as UserFont
-from grow import Piezo
+from piezo import Piezo
 from PIL import Image, ImageDraw, ImageFont
 
 from ui import DISPLAY_WIDTH, DISPLAY_HEIGHT
