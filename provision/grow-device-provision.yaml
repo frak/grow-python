@@ -43,7 +43,7 @@
         state: directory
     - name: Copy settings if not there already
       copy:
-        src: "../settings.yml"
+        src: "../grow_device/settings.yml"
         dest: /var/lib/grow-monitor/settings.yml
         force: no
     - name: Check if SPI is enabled
