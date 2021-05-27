@@ -164,7 +164,7 @@ Dry point: {dry_point}
         if time.time() - self.last_dose < self.watering_delay:
             return False
 
-        self.pump.dose(self.pump_speed, self.pump_time, blocking=False)
+        self.pump.dose(self.pump_speed, self.pump_time, blocking=True)
         self.set_last_dose()
         return True
 
