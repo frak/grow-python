@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('alarm_point', models.DecimalField(decimal_places=1, max_digits=3)),
                 ('pump_speed', models.DecimalField(decimal_places=1, max_digits=3)),
                 ('pump_duration', models.DecimalField(decimal_places=1, max_digits=3)),
-                ('grow_unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='grow_api.growunit')),
+                ('grow_unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.growunit')),
             ],
             options={
                 'ordering': ['number'],

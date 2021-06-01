@@ -1,4 +1,4 @@
-"""grow_admin URL Configuration
+"""admin URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.2/topics/http/urls/
@@ -17,7 +17,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path
 
-from grow_api.views import GrowUnitViewSet
+from admin.api.views import GrowUnitViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),

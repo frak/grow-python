@@ -13,7 +13,6 @@ class Config:
             "warn_level",
             "wet_point",
             "dry_point",
-            "watering_delay",
             "auto_water",
             "pump_time",
             "pump_speed",
@@ -23,6 +22,7 @@ class Config:
         self.general_settings = [
             "alarm_enable",
             "alarm_interval",
+            "watering_delay",
         ]
 
     def load(self, settings_file):

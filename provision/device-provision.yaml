@@ -1,5 +1,5 @@
 ---
-- name: Provision Grow Pi
+- name: Provision Grow Pi Device
   hosts: all
   vars:
     ansible_python_interpreter: /usr/bin/python3
@@ -43,7 +43,7 @@
         state: directory
     - name: Copy settings if not there already
       copy:
-        src: "../grow_device/settings.yml"
+        src: "../device/settings.yml"
         dest: /var/lib/grow-monitor/settings.yml
         force: no
     - name: Check if SPI is enabled
@@ -72,7 +72,7 @@
         - grow-monitor.service
         - grow-worker.service
         - grow-worker.timer
-    - name: Restart services
+    - name: Start services
       systemd:
         state: restarted
         daemon_reload: yes
@@ -80,3 +80,5 @@
       with_items:
         - grow-monitor.service
         - grow-worker.timer
+    - name: Reboot the device to apply changes
+      reboot:

@@ -94,6 +94,16 @@ def main():
             "object": alarm,
             "help": "Enable the piezo alarm beep.",
         },
+        {
+            "title": "Watering Delay",
+            "prop": "watering_delay",
+            "inc": 1,
+            "min": 10,
+            "max": 1200,
+            "mode": "int",
+            "format": lambda value: f"{value:0.0f}sec",
+            "help": "Delay between waterings"
+        },
     ]
 
     view_controller = ViewController([

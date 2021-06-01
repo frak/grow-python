@@ -567,16 +567,6 @@ class ChannelEditView(ChannelView, EditView):
                 "format": lambda value: f"{value * 100:0.0f}%",
                 "help": "Speed of pump"
             },
-            {
-                "title": "Watering Delay",
-                "prop": "watering_delay",
-                "inc": 10,
-                "min": 30,
-                "max": 1200,
-                "mode": "int",
-                "format": lambda value: f"{value:0.0f}sec",
-                "help": "Delay between waterings"
-            },
         ]
         EditView.__init__(self, image, options)
         ChannelView.__init__(self, image, channel)

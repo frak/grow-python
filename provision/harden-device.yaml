@@ -1,0 +1,18 @@
+---
+- name: Harden Grow Pi Device
+  hosts: all
+  vars:
+    host_name: "{{ lookup('env', 'HOST_NAME') | default('grow-pi') }}"
+  become: yes
+  tasks:
+    - name: Set host name
+      shell:
+        cmd: "raspi-config nonint do_hostname {{ host_name }}"
+    - name: Disallow root logins and disable passwords
+      blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          PermitRootLogin no
+          PasswordAuthentication no
+    - name: Reboot the device to apply changes
+      reboot:

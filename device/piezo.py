@@ -36,7 +36,7 @@ class Piezo():
 
     def beep(self, frequency=440, timeout=0.1, blocking=True, force=False):
         """Beep the piezo for time seconds.
-        :param freq: Frequency, in hertz, of the piezo
+        :param frequency: Frequency, in hertz, of the piezo
         :param timeout: Time, in seconds, of the piezo beep
         :param blocking: If true, function will block until piezo has stopped
         """
