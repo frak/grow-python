@@ -1,7 +1,7 @@
 from django.db import models
 from rest_framework import serializers
 
-from grow_api.models import Channel, GrowUnit
+from .models import Channel, GrowUnit
 
 
 class ChannelSerializer(serializers.ModelSerializer):
@@ -14,7 +14,7 @@ class ChannelSerializer(serializers.ModelSerializer):
 
 
 class GrowUnitSerializer(serializers.ModelSerializer):
-    channels = ChannelSerializer(many=True)
+    channels = ChannelSerializer(many=True, read_only=True)
     joined_at = serializers.DateTimeField(read_only=True)
 
     class Meta:

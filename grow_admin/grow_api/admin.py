@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import GrowUnit, Channel
 
-# Register your models here.
+admin.site.register(GrowUnit)
+admin.site.register(Channel)
