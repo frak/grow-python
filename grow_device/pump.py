@@ -69,6 +69,7 @@ class Pump(object):
     def dose(self, speed, timeout=0.1, blocking=True, force=False):
         """Pulse the pump for timeout seconds.
 
+        :param speed: Speed of the pump 0.0 - 1.0
         :param timeout: Timeout, in seconds, of the pump pulse
         :param blocking: If true, function will block until pump has stopped
         :param force: Applies only to non-blocking. If true, any previous dose will be replaced
