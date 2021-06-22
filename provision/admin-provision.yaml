@@ -7,12 +7,8 @@
       - vim
       - git
       - python3-pip
-    pip_packages:
-      - django
-      - djangorestframework
-      - python-dotenv
+      - nginx
   become: yes
-  become_user: root
   tasks:
     - name: Install packages
       apt:
@@ -20,12 +16,38 @@
         pkg: "{{ packages }}"
         update_cache: yes
         cache_valid_time: 3600
-    - name: Install python dependencies
-      pip:
-        name: "{{ pip_packages }}"
-        executable: /usr/bin/pip3
     - name: Checkout code from Github
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: ui-separation
+        version: master
+    - name: Install python dependencies
+      pip:
+        requirements: /var/grow-python/admin/requirements.txt
+        executable: /usr/bin/pip3
+    - name: Set /etc/hosts entry for admin.grow
+      lineinfile:
+        path: /etc/hosts
+        line: 127.0.0.1 admin.grow
+    - name: Create vhost for Nginx
+      copy:
+        src: ../nginx/admin.grow
+        dest: /etc/nginx/sites-available/admin.grow
+    - name: Activate vhost
+      file:
+        src: /etc/nginx/sites-available/admin.grow
+        dest: /etc/nginx/sites-enabled/admin.grow
+        state: link
+    - name: Copy service file
+      copy:
+        src: ../service/grow-admin.service
+        dest: /etc/systemd/system/admin.grow.service
+    - name: Start service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: admin.grow.service
+    - name: Run database migrations
+      command:
+        chdir: /var/grow-python/admin
+        cmd: /usr/bin/python3 manage.py migrate

@@ -1,0 +1,11 @@
+[Unit]
+Description=Grow admin gunicorn service
+After=network.target
+
+[Service]
+WorkingDirectory=/var/grow-python/admin
+ExecStart=/usr/local/bin/gunicorn --access-logfile - --workers 2 --bind unix:/var/grow-python/admin/admin.sock admin.wsgi:application
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
