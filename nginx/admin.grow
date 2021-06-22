@@ -1,0 +1,18 @@
+server {
+    server_name admin.grow;
+    client_max_body_size 1M;
+
+    location / {
+        proxy_pass http://unix:/var/grow-python/admin/admin.sock;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+    }
+
+    location /static/ {
+        alias   /var/grow-python/admin/static/;
+    }
+
+    error_log /var/log/nginx/grow_admin_error.log;
+    access_log /var/log/nginx/grow_admin_access.log;
+}
