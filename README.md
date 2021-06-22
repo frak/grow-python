@@ -34,7 +34,7 @@ secure the installation:
 
 The device will reboot. Now provision the Grow Pi software itself:
 
-    $ ansible-playbook provision/device-provision.yaml -i growpi.local, -u pi`
+    $ ansible-playbook provision/device-provision.yaml -i growpi.local, -u pi
 
 The device will reboot.
 

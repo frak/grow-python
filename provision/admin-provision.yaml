@@ -7,12 +7,8 @@
       - vim
       - git
       - python3-pip
-    pip_packages:
-      - django
-      - djangorestframework
-      - python-dotenv
+      - nginx
   become: yes
-  become_user: root
   tasks:
     - name: Install packages
       apt:
@@ -20,12 +16,12 @@
         pkg: "{{ packages }}"
         update_cache: yes
         cache_valid_time: 3600
-    - name: Install python dependencies
-      pip:
-        name: "{{ pip_packages }}"
-        executable: /usr/bin/pip3
     - name: Checkout code from Github
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: ui-separation
+        version: master
+    - name: Install python dependencies
+      pip:
+        requirements: /var/grow-python/admin/requirements.txt
+        executable: /usr/bin/pip3

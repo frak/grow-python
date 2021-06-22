@@ -36,7 +36,7 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: ui-separation
+        version: master
     - name: Creating runtime directory
       file:
         path: /var/lib/grow-monitor
