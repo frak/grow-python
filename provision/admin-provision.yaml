@@ -47,7 +47,14 @@
         state: restarted
         daemon_reload: yes
         name: admin.grow.service
+    - name: Get migration status
+      command:
+        chdir: /var/grow-python/admin
+        cmd: /usr/bin/python3 manage.py showmigrations
+      register: migration_status
+      changed_when: migration_status.stdout is regex("\[\s\]")
     - name: Run database migrations
       command:
         chdir: /var/grow-python/admin
         cmd: /usr/bin/python3 manage.py migrate
+      when: migration_status.stdout is regex("\[\s\]")
