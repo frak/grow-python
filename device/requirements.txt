@@ -3,7 +3,7 @@ fonts==0.0.3
 ltr559==0.1.1
 numpy==1.16.2
 Pillow==5.4.1
-PyYAML==3.13
+PyYAML==5.4
 RPi.GPIO==0.7.0
 spidev==3.5
 ST7735==0.0.4
