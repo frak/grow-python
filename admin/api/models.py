@@ -2,10 +2,10 @@ from django.db import models
 
 
 class GrowUnit(models.Model):
-    host = models.CharField(max_length=64)
-    title = models.CharField(max_length=64)
+    host = models.CharField(max_length=64, null=True, blank=True)
+    title = models.CharField(max_length=64, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    wait_interval = models.IntegerField()
+    wait_interval = models.IntegerField(null=True, blank=True)
     joined_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

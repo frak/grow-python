@@ -16,10 +16,10 @@ class Migration(migrations.Migration):
             name='GrowUnit',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('host', models.CharField(max_length=64)),
-                ('title', models.CharField(max_length=64)),
+                ('host', models.CharField(max_length=64, blank=True, null=True)),
+                ('title', models.CharField(max_length=64, blank=True, null=True)),
                 ('description', models.TextField(blank=True, null=True)),
-                ('wait_interval', models.IntegerField()),
+                ('wait_interval', models.IntegerField(blank=True, null=True)),
                 ('joined_at', models.DateTimeField(auto_now_add=True)),
             ],
         ),
