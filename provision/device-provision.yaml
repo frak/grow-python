@@ -3,6 +3,7 @@
   hosts: all
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    admin_host: "{{ lookup('env', 'ADMIN_HOST') | default('http://admin.grow') }}"
     packages:
       - vim
       - git
@@ -23,20 +24,15 @@
         pkg: "{{ packages }}"
         update_cache: yes
         cache_valid_time: 3600
-    - name: Install python dependencies
-      pip:
-        name:
-          - st7735
-          - pyyaml
-          - ltr559
-          - fonts
-          - font-roboto
-        executable: /usr/bin/pip3
     - name: Checkout code from Github
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
         version: master
+    - name: Install python dependencies
+      pip:
+        requirements: /var/grow-python/device/requirements.txt
+        executable: /usr/bin/pip3
     - name: Creating runtime directory
       file:
         path: /var/lib/grow-monitor
@@ -80,5 +76,8 @@
       with_items:
         - grow-monitor.service
         - grow-worker.timer
+    - name: Register this provisioning with the admin server
+      uri:
+        url: "{{ admin_host}}/api/provision"
     - name: Reboot the device to apply changes
       reboot:
