@@ -4,7 +4,6 @@ i2cdevice==0.0.7
 ltr559==0.1.1
 numpy==1.21.0
 Pillow==8.2.0
-pkg-resources==0.0.0
 PyYAML==5.4.1
 RPi.GPIO==0.7.0
 smbus==1.1.post2
