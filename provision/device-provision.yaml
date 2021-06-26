@@ -3,18 +3,12 @@
   hosts: all
   vars:
     ansible_python_interpreter: /usr/bin/python3
-    admin_host: "{{ lookup('env', 'ADMIN_HOST') | default('http://admin.grow') }}"
+    admin_host: "{{ lookup('env', 'ADMIN_HOST') | default('admin.grow', true) }}"
+    admin_ip: "{{ lookup('env', 'ADMIN_IP') | default('192.168.0.19', true) }}"
     packages:
       - vim
       - git
       - python3-pip
-      - python3-setuptools
-      - python3-yaml
-      - python3-smbus
-      - python3-pil
-      - python3-spidev
-      - python3-rpi.gpio
-      - python3-numpy
   become: yes
   become_user: root
   tasks:
@@ -28,7 +22,7 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: master
+        version: register-grow-units
     - name: Install python dependencies
       pip:
         requirements: /var/grow-python/device/requirements.txt
@@ -76,8 +70,12 @@
       with_items:
         - grow-monitor.service
         - grow-worker.timer
+    - name: Set /etc/hosts entry for admin server
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ admin_ip }} {{ admin_host }}"
     - name: Register this provisioning with the admin server
       uri:
-        url: "{{ admin_host}}/api/provision"
+        url: "http://{{ admin_host}}/api/provision/{{ ansible_facts['hostname'] }}"
     - name: Reboot the device to apply changes
       reboot:

@@ -2,7 +2,7 @@
 - name: Harden Grow Pi Device
   hosts: all
   vars:
-    host_name: "{{ lookup('env', 'HOST_NAME') | default('grow-pi') }}"
+    host_name: "{{ lookup('env', 'HOST_NAME') | default('grow-pi', true) }}"
   become: yes
   tasks:
     - name: Set host name

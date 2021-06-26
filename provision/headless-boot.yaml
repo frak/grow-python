@@ -2,8 +2,8 @@
 - name: Prepare RPi image for headless booting
   hosts: localhost
   vars:
-    wpa_conf_path: "{{ lookup('env', 'WPA_CONF') | default('~/Documents/wpa_supplicant.conf') }}"
-    boot_partition: "{{ lookup('env', 'BOOT_PART') | default('/Volumes/boot') }}"
+    wpa_conf_path: "{{ lookup('env', 'WPA_CONF') | default('~/Documents/wpa_supplicant.conf', true) }}"
+    boot_partition: "{{ lookup('env', 'BOOT_PART') | default('/Volumes/boot', true) }}"
   tasks:
     - name: Create file to enable SSH
       file:
