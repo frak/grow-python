@@ -24,7 +24,7 @@ set-up on your workstation and a freshly written [Raspberry Pi OS Lite image](ht
 Enable SSH for the image and copy Wi-Fi configuration for first boot (default values for 
 env vars shown here):
 
-    $ WPA_CONF=~/Documents/wpa_supplicant.conf BOOT_PART=/Volumes/boot ansible-playbook provision/headless-boot.yaml -i localhost,
+    $ WPA_CONF=~/Documents/wpa_supplicant.conf BOOT_PART=/Volumes/boot ansible-playbook provision/headless-boot.yaml -i localhost, --connection=local
 
 Unmount the SD card and insert it into the Pi, then power up the device. Once it has booted,
 secure the installation:

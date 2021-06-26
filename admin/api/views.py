@@ -1,6 +1,4 @@
-import json
-
-from django.http import HttpResponse, JsonResponse, Http404
+from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework.viewsets import ModelViewSet
@@ -18,16 +16,15 @@ class GrowUnitViewSet(ModelViewSet):
         return get_object_or_404(GrowUnit, host=self.request.query_params.get('host'))
 
 
-def index(request):
-    remote_host = request.META['REMOTE_HOST']
-    if "" == remote_host:
+def index(request, host_name):
+    if "" == host_name:
         action = 'unset'
     else:
         try:
-            get_object_or_404(GrowUnit, host=remote_host)
+            get_object_or_404(GrowUnit, host=host_name)
             action = 'exists'
         except Http404 as e:
-            unit = GrowUnit(host=remote_host)
+            unit = GrowUnit(host=host_name)
             unit.save()
             action = f"persisted {unit.id}"
 

@@ -3,7 +3,7 @@ from django.urls import path
 from .views import GrowUnitViewSet, index
 
 urlpatterns = [
-    path('provision', index, name='provision'),
+    path('provision/<str:host_name>', index, name='provision'),
     url(r'^grow-unit$', GrowUnitViewSet.as_view(
         {
             'get': 'retrieve',
