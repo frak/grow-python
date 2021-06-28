@@ -4,7 +4,7 @@ Wants=grow-worker.timer
 
 [Service]
 WorkingDirectory=/var/grow-python/grow_device
-ExecStart=/var/grow-python/grow_device/worker.py /var/lib/grow-monitor/settings.yml
+ExecStart=/var/grow-python/grow_device/worker.py http://{{ admin_host }}/api/grow-units?host={{ unit_host }}
 
 [Install]
 WantedBy=multi-user.target

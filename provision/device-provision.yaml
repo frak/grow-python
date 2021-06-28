@@ -31,11 +31,10 @@
       file:
         path: /var/lib/grow-monitor
         state: directory
-    - name: Copy settings if not there already
-      copy:
-        src: "../device/settings.yml"
-        dest: /var/lib/grow-monitor/settings.yml
-        force: no
+    - name: Set /etc/hosts entry for admin server
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ admin_ip }} {{ admin_host }}"
     - name: Check if SPI is enabled
       command: raspi-config nonint get_spi
       register: has_spi
@@ -55,9 +54,11 @@
         path: /boot/config.txt
         line: dtoverlay=spi0-cs,cs0_pin=14
     - name: Copy service files
-      copy:
-        src: "../service/{{ item }}"
+      template:
+        src: "../service/{{ item }}.j2"
         dest: "/etc/systemd/system/{{ item }}"
+      vars:
+        unit_host: "{{ ansible_facts['hostname'] }}"
       with_items:
         - grow-monitor.service
         - grow-worker.service
@@ -70,10 +71,6 @@
       with_items:
         - grow-monitor.service
         - grow-worker.timer
-    - name: Set /etc/hosts entry for admin server
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ admin_ip }} {{ admin_host }}"
     - name: Register this provisioning with the admin server
       uri:
         url: "http://{{ admin_host}}/api/provision/{{ ansible_facts['hostname'] }}"
