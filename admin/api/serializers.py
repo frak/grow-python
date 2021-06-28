@@ -5,11 +5,13 @@ from .models import Channel, GrowUnit
 
 
 class ChannelSerializer(serializers.ModelSerializer):
+    grow_unit_id = serializers.PrimaryKeyRelatedField(queryset=GrowUnit.objects.all(), source='grow_unit.id')
+
     class Meta:
         model = Channel
         fields = (
             'number', 'plant', 'enabled', 'auto_water', 'alarm', 'wet_point', 'dry_point', 'alarm_point', 'pump_speed',
-            'pump_duration'
+            'pump_duration', 'grow_unit_id'
         )
 
 

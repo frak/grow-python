@@ -22,7 +22,7 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: register-grow-units
+        version: master
     - name: Install python dependencies
       pip:
         requirements: /var/grow-python/device/requirements.txt

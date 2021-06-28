@@ -20,11 +20,16 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: register-grow-units
+        version: master
     - name: Install python dependencies
       pip:
         requirements: /var/grow-python/admin/requirements.txt
         executable: /usr/bin/pip3
+    - name: Copy .env if not there already (remember to edit!)
+      copy:
+        src: "../service/.env.dist"
+        dest: /var/grow-python/admin/.env
+        force: no
     - name: Set /etc/hosts entry for admin.grow
       lineinfile:
         path: /etc/hosts

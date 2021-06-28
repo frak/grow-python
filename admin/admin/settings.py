@@ -123,6 +123,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOG_FILE_PATH = str(os.environ.get('LOG_FILE_PATH', BASE_DIR / 'grow-admin.log'))
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -130,7 +131,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/grow-admin.log',
+            'filename': LOG_FILE_PATH,
         },
     },
     'loggers': {

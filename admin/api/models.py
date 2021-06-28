@@ -19,7 +19,7 @@ class Channel(models.Model):
     auto_water = models.BooleanField(default=True)
     alarm = models.BooleanField(default=False)
 
-    grow_unit = models.ForeignKey(GrowUnit, on_delete=models.CASCADE)
+    grow_unit = models.ForeignKey(GrowUnit, on_delete=models.CASCADE, related_name='channels')
 
     wet_point = models.DecimalField(decimal_places=1, max_digits=3)
     dry_point = models.DecimalField(decimal_places=1, max_digits=3)
@@ -32,4 +32,5 @@ class Channel(models.Model):
         return f"{self.number} - {self.plant}" if len(self.plant) > 0 else f"{self.number}"
 
     class Meta:
+        unique_together = ['grow_unit', 'number']
         ordering = ['number']
