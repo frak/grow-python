@@ -3,6 +3,7 @@
   hosts: all
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    git_branch: "{{ lookup('env', 'GIT_BRANCH') | default('master', true) }}"
     packages:
       - vim
       - git
@@ -20,7 +21,7 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: master
+        version: "{{ git_branch }}"
     - name: Install python dependencies
       pip:
         requirements: /var/grow-python/admin/requirements.txt

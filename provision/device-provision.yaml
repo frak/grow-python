@@ -3,6 +3,7 @@
   hosts: all
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    git_branch: "{{ lookup('env', 'GIT_BRANCH') | default('master', true) }}"
     admin_host: "{{ lookup('env', 'ADMIN_HOST') | default('admin.grow', true) }}"
     admin_ip: "{{ lookup('env', 'ADMIN_IP') | default('192.168.0.19', true) }}"
     packages:
@@ -22,7 +23,7 @@
       git:
         repo: https://github.com/frak/grow-python.git
         dest: /var/grow-python
-        version: master
+        version: "{{ git_branch }}"
     - name: Install python dependencies
       pip:
         requirements: /var/grow-python/device/requirements.txt
